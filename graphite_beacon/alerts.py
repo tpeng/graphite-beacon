@@ -281,3 +281,58 @@ class URLAlert(BaseAlert):
                 self.notify('critical', str(e), target='loading', ntype='common')
 
             self.waiting = False
+
+
+class PubopsAlert(GraphiteAlert):
+
+    """
+    Like GraphiteAlert, but checks 2 targets instead of one and it assume the
+    second target refer to the total count of something in first target.
+    """
+    source = 'pubops'
+
+    def configure(self, **options):
+        super(PubopsAlert, self).configure(**options)
+        self.summarize_interval = options.get('summarize_interval', "12hour")
+
+    @gen.coroutine
+    def load(self):
+        LOGGER.debug('%s: start checking: %s' % (self.name, self.query))
+        if self.waiting:
+            self.notify('warning', 'Process takes too much time', target='waiting', ntype='common')
+        else:
+            self.waiting = True
+            try:
+                response = yield self.client.fetch(self.url, auth_username=self.auth_username,
+                                                   auth_password=self.auth_password,
+                                                   request_timeout=self.request_timeout)
+                records = [GraphiteRecord(line.decode('utf-8', 'ignore'), self.default_nan_value, self.ignore_nan) \
+                    for line in response.buffer]
+                data = [
+                    (None if record.empty else getattr(record, self.method), record.target)
+                    for record in records]
+                data = [(l1*100.0/l2, '%d out of %d requests in last %s' % (l1, l2, self.summarize_interval)) \
+                    for l1, l2 in zip(data[0][:-1], data[1][:-1])]
+                if len(data) == 0:
+                    raise ValueError('No data')
+                self.check(data)
+                self.notify('normal', 'Metrics are loaded', target='loading', ntype='common')
+            except Exception as e:
+                self.notify(self.loading_error, 'Loading error: %s' % e, target='loading', ntype='common')
+            self.waiting = False
+
+
+    def get_graph_url(self, target, graphite_url=None):
+        return self._graphite_url(target, graphite_url=graphite_url, raw_data=False)
+
+    def _graphite_url(self, query, raw_data=False, graphite_url=None):
+        """ Build Graphite URL. """
+        # query = escape.url_escape(query)
+        graphite_url = graphite_url or self.reactor.options.get('public_graphite_url')
+
+        url = "{base}/render/?target={query}&from=-{time_window}&until=-{until}&width=1024".format(
+            base=graphite_url, query=query, time_window=self.time_window, until=self.until)
+        if raw_data:
+            url = "{0}&rawData=true".format(url)
+        return url
+

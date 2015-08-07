@@ -33,7 +33,7 @@ class SlackHandler(AbstractHandler):
         self.client = hc.AsyncHTTPClient()
 
     def get_message(self, level, alert, value, target=None, ntype=None, rule=None):
-        msg_type = 'slack' if ntype == 'graphite' else 'short'
+        msg_type = 'slack' if (ntype == 'graphite' or ntype == 'pubops') else 'short'
         tmpl = TEMPLATES[ntype][msg_type]
         return tmpl.generate(
             level=level, reactor=self.reactor, alert=alert, value=value, target=target).strip()

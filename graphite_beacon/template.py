@@ -21,4 +21,10 @@ TEMPLATES = {
         'text': LOADER.load('common/message.txt'),
         'short': LOADER.load('common/short.txt'),
     },
+    'pubops': {
+        'html': LOADER.load('pubops/message.html'),
+        'text': LOADER.load('pubops/message.txt'),
+        'short': LOADER.load('pubops/short.txt'),
+        'slack': LOADER.load('pubops/slack.txt')
+    },
 }
