@@ -311,7 +311,7 @@ class PubopsAlert(GraphiteAlert):
                 data = [
                     (None if record.empty else getattr(record, self.method), record.target)
                     for record in records]
-                data = [(l1*100.0/l2, '%d out of %d requests in last %s' % (l1, l2, self.summarize_interval)) \
+                data = [(l1*100.0/l2, '%d/%d requests in last %s' % (l1, l2, self.summarize_interval)) \
                     for l1, l2 in zip(data[0][:-1], data[1][:-1])]
                 if len(data) == 0:
                     raise ValueError('No data')
