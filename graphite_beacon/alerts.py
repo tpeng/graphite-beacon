@@ -294,6 +294,7 @@ class PubopsAlert(GraphiteAlert):
     def configure(self, **options):
         super(PubopsAlert, self).configure(**options)
         self.summarize_interval = options.get('summarize_interval', "12hour")
+        self.minimal_count = options.get('minimal_count', 25)
 
     @gen.coroutine
     def load(self):
@@ -311,10 +312,12 @@ class PubopsAlert(GraphiteAlert):
                 data = [
                     (None if record.empty else getattr(record, self.method), record.target)
                     for record in records]
+                if len(data) < 2:
+                    raise ValueError('No data %s' %self.url)
                 data = [(l1*100.0/l2, '%d/%d requests in last %s' % (l1, l2, self.summarize_interval)) \
-                    for l1, l2 in zip(data[0][:-1], data[1][:-1])]
+                    for l1, l2 in zip(data[0][:-1], data[1][:-1]) if l1 > self.minimal_count]
                 if len(data) == 0:
-                    raise ValueError('No data')
+                    raise ValueError('No data %s' %self.url)
                 self.check(data)
                 self.notify('normal', 'Metrics are loaded', target='loading', ntype='common')
             except Exception as e:
