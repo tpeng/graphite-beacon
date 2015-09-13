@@ -330,7 +330,7 @@ class PubopsAlert(GraphiteAlert):
                 if len(data) < 2:
                     raise ValueError('No data %s' %self.url)
                 data = [(l1*100.0/l2, '%d/%d requests in last %s' % (l1, l2, self.summarize_interval)) \
-                    for l1, l2 in zip(data[0][:-1], data[1][:-1]) if l1 > self.minimal_count]
+                    for l1, l2 in zip(data[0][:-1], data[1][:-1]) if l2 > self.minimal_count]
                 if len(data) == 0:
                     raise ValueError('No data %s' %self.url)
                 self.check(data)
