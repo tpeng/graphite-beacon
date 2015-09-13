@@ -321,7 +321,8 @@ class PubopsAlert(GraphiteAlert):
             try:
                 response = yield self.client.fetch(self.url, auth_username=self.auth_username,
                                                    auth_password=self.auth_password,
-                                                   request_timeout=self.request_timeout)
+                                                   request_timeout=self.request_timeout,
+                                                   connect_timeout=self.connect_timeout)
                 records = [GraphiteRecord(line.decode('utf-8', 'ignore'), self.default_nan_value, self.ignore_nan) \
                     for line in response.buffer]
                 data = [
@@ -332,7 +333,7 @@ class PubopsAlert(GraphiteAlert):
                 data = [(l1*100.0/l2, '%d/%d requests in last %s' % (l1, l2, self.summarize_interval)) \
                     for l1, l2 in zip(data[0][:-1], data[1][:-1]) if l2 > self.minimal_count]
                 if len(data) == 0:
-                    raise ValueError('No data %s' %self.url)
+                    raise ValueError('No efficient data %s' %self.url)
                 self.check(data)
                 self.notify('normal', 'Metrics are loaded', target='loading', ntype='common')
             except Exception as e:
