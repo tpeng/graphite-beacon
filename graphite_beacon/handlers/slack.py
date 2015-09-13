@@ -51,4 +51,4 @@ class SlackHandler(AbstractHandler):
             data['channel'] = self.channel
 
         body = json.dumps(data)
-        yield self.client.fetch(self.webhook, method='POST', body=body)
+        yield self.client.fetch(self.webhook, method='POST', body=body, request_timeout=600, connect_timeout=600)
